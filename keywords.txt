@@ -1,0 +1,36 @@
+################################################
+# Syntax Coloring Map for MemoryLCD
+################################################
+
+################################################
+# Datatypes (KEYWORD1)
+################################################
+
+MemoryLCD 				KEYWORD1
+
+################################################
+# Methods and Functions (KEYWORD2)
+################################################
+
+begin					KEYWORD2
+writeLineToDisplay			KEYWORD2
+writeMultipleLinesToDisplay		KEYWORD2
+writePixelToLineBuffer			KEYWORD2
+writeByteToLineBuffer			KEYWORD2
+copyByteWithinLineBuffer		KEYWORD2
+setLineBufferBlack			KEYWORD2
+setLineBufferWhite			KEYWORD2
+writeLineBufferToDisplay		KEYWORD2
+writeLineBufferToDisplayRepeatedly	KEYWORD2
+clearLineBuffer				KEYWORD2
+clearDisplay				KEYWORD2
+turnOff					KEYWORD2
+turnOn					KEYWORD2
+getDisplayWidth				KEYWORD2
+getDisplayHeight			KEYWORD2
+softToggleVCOM				KEYWORD2
+toggleLED				KEYWORD2
+################################################
+# Constants (LITERAL1)
+################################################
+
