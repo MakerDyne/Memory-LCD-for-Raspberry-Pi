@@ -29,7 +29,7 @@ turnOn					KEYWORD2
 getDisplayWidth				KEYWORD2
 getDisplayHeight			KEYWORD2
 softToggleVCOM				KEYWORD2
-toggleLED				KEYWORD2
+
 ################################################
 # Constants (LITERAL1)
 ################################################

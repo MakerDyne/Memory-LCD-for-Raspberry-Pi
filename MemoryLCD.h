@@ -10,8 +10,8 @@
 #include <SPI.h>
 
 // Memory LCD pixel dimensions - ALTER ACCORDING TO YOUR PARTICULAR LCD MODEL
-#define LCDWIDTH		(400)
-#define LCDHEIGHT		(240)
+#define LCDWIDTH		(96)
+#define LCDHEIGHT		(96)
 
 // Delay constants for LCD timing   // (Datasheet values)
 #define PWRUP_DISP_DELAY	40  // (>30us)
@@ -47,8 +47,6 @@ class MemoryLCD {
     int getDisplayHeight();
     // software VCOM control - NOT YET PROPERLY IMPLEMENTED
     void softToggleVCOM();
-    // LED is for testing only
-    void toggleLED(void);
   private:
     byte commandByte;
     byte vcomByte;
@@ -59,9 +57,6 @@ class MemoryLCD {
     byte EXTCOMIN;
     boolean enablePWM;
     byte lineBuffer[LCDWIDTH/8];
-    // LED is for testing only
-    byte LED;
-    boolean ledState;
 };
 
 #endif

@@ -76,11 +76,6 @@ void MemoryLCD::begin(void) {
   delayMicroseconds(PWRUP_EXTCOMIN_DELAY);
   
   clearLineBuffer();
-
-  // setup LED pin, NB: LED is for testing only
-  LED = 7;
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
 }
 
 
@@ -214,15 +209,4 @@ void MemoryLCD::softToggleVCOM() {
   delayMicroseconds(SCS_LOW_DELAY);
   digitalWrite(SCS, LOW);
   delayMicroseconds(10);
-}
-
-
-void MemoryLCD::toggleLED(void) {
-  if(ledState) {
-    digitalWrite(LED, LOW);
-    ledState = false;
-  } else {
-    digitalWrite(LED, HIGH);
-    ledState = true;
-  }
 }

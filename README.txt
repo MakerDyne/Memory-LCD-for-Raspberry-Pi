@@ -36,6 +36,15 @@ you should end up with the following:
 
 SOFTWARE USE:
 
+Before doing anything, you must edit 
+
+#define LCDWIDTH	96
+#define LCDHEIGHT	96
+
+in the file "MemoryLCD.h" to match the dimensions of your particular model of Memory LCD in pixels.
+
+(The boards I am selling are either (WxH) 96x96 pixels, 128x128 pixels, or 400x240 pixels.)
+
 Run the demo sketch to check your breakout board is working.
 To use the MemoryLCD class in your own sketch, you must include the following at the top of your sketch:
 
