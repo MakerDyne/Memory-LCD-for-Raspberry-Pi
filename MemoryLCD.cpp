@@ -27,7 +27,8 @@ MemoryLCD::MemoryLCD(char SCSpin, char DISPpin, char EXTCOMINpin, bool useEXTCOM
   // (probably redundant here as Pi's boot is much longer than Arduino's power-on time)
   bcm2835_delayMicroseconds(800);  // minimum 750us
 
-  // setup timer for EXTCOMIN signal
+  // setup separate thread to continuously output the EXTCOMIN signal for as long as the parent runs.
+  // NB: this leaves the Memory LCD vulnerable if an image is left displayed after the program stops.
   pthread_t threadId;
   if(enablePWM) {
     if(pthread_create(&threadId, NULL, &hardToggleVCOM, (void *)EXTCOMIN)) {
@@ -39,11 +40,11 @@ MemoryLCD::MemoryLCD(char SCSpin, char DISPpin, char EXTCOMINpin, bool useEXTCOM
     // TODO: setup timer driven interrupt instead?
   }
   
-  // setup SPI
-  // Datasheet says SPI clock must have <1MHz frequency (SPI_CLOCK_DIV16)
-  // but it may work up to 4MHz (SPI_CLOCK_DIV4, SPI_CLOCK_DIV8)
+  // SETUP SPI
+  // Datasheet says SPI clock must have <1MHz frequency (BCM2835_SPI_CLOCK_DIVIDER_256)
+  // but it may work up to 4MHz (BCM2835_SPI_CLOCK_DIVIDER_128, BCM2835_SPI_CLOCK_DIVIDER_64)
   /*
-   * The Raspberry Pi GPIO pins used for SPI are:
+   * The Raspberry Pi GPIO pins reserved for SPI once bcm2835_spi_begin() is called are:
    * P1-19 (MOSI)
    * P1-21 (MISO)
    * P1-23 (CLK)
@@ -51,11 +52,14 @@ MemoryLCD::MemoryLCD(char SCSpin, char DISPpin, char EXTCOMINpin, bool useEXTCOM
    * P1-26 (CE1)
    */
   bcm2835_spi_begin();
-  bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);  // set here - setting to LSB elsewhere doesn't work. Manually reversing lineAddress bit order instead
-  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128);	// this is the conservative setting
+  // set MSB here - setting to LSB elsewhere doesn't work. So I'm manually reversing lineAddress bit order instead.
+  bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);
+  bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_128);	// this is the 2 MHz setting
   bcm2835_spi_setDataMode(BCM2835_SPI_MODE0);
-  bcm2835_spi_chipSelect(BCM2835_SPI_CS_NONE);   // Not sure if I can use the built-in CS functionality
-  //Docs suggest it only affects bcm2835_spi_transfer() calls so I'm setting it to inactive and setting up my own CS pin.
+  bcm2835_spi_chipSelect(BCM2835_SPI_CS_NONE);
+  // Not sure if I can use the built-in bcm2835 Chip Select functions as the docs suggest it only
+  // affects bcm2835_spi_transfer() calls so I'm setting it to inactive and setting up my own CS pin
+  // as I want to use bcm2835_spi_writenb() to send data over SPI instead.
   
   // Set pin modes
   bcm2835_gpio_write(SCS, LOW);
@@ -92,7 +96,6 @@ void MemoryLCD::writeMultipleLinesToDisplay(char lineNumber, char numLines, char
   // have to be, as an address is given for every line, not just the first in the sequence)
   // data for all lines should be stored in a single array
   char * linePtr = lines;
-  char * plNumber = &lineNumber;
   bcm2835_gpio_write(SCS, HIGH);
   bcm2835_delayMicroseconds(SCS_HIGH_DELAY);
   bcm2835_spi_writenb(&commandByte, 1);
@@ -107,7 +110,7 @@ void MemoryLCD::writeMultipleLinesToDisplay(char lineNumber, char numLines, char
   bcm2835_spi_writenb(&paddingByte, 1);  // trailing paddings
   bcm2835_delayMicroseconds(SCS_LOW_DELAY);
   bcm2835_gpio_write(SCS, LOW);
-  bcm2835_delayMicroseconds(INTERFRAME_DELAY);
+  bcm2835_delayMicroseconds(INTERFRAME_DELAY);	// can I delete this delay?
 }
 
 
@@ -127,7 +130,7 @@ void MemoryLCD::writePixelToLineBuffer(unsigned int pixel, bool isWhite) {
 void MemoryLCD::writeByteToLineBuffer(char byteNumber, char byteToWrite) {
 // char location expected in the fn args has been extrapolated from the pixel location
 // format (see above), so chars go from 1 to LCDWIDTH/8, not from 0
-  if(byteNumber <= LCDWIDTH/8) {
+  if(byteNumber <= LCDWIDTH/8 && byteNumber != 0) {
     byteNumber -= 1;
     lineBuffer[byteNumber] = byteToWrite;
   } 
@@ -166,8 +169,57 @@ void MemoryLCD::writeLineBufferToDisplayRepeatedly(char lineNumber, char numLine
 }
 
 
+void MemoryLCD::writePixelToFrameBuffer(unsigned int pixel, char lineNumber, bool isWhite) {
+// pixel location expected in the fn args follows the scheme defined in the datasheet.
+// NB: the datasheet defines pixel addresses starting from 1, NOT 0
+  if((pixel <= LCDWIDTH) && (pixel != 0) && (lineNumber <=LCDHEIGHT) & (lineNumber != 0)) {
+    pixel -= 1;
+    lineNumber -= 1;
+    if(isWhite)
+      frameBuffer[(lineNumber*LCDWIDTH/8)+(pixel/8)] |=  (1 << (7 - pixel%8));
+    else
+      frameBuffer[(lineNumber*LCDWIDTH/8)+(pixel/8)] &= ~(1 << (7 - pixel%8));
+  }  
+}
+
+
+void MemoryLCD::writeByteToFrameBuffer(char byteNumber, char lineNumber, char byteToWrite) {
+// char location expected in the fn args has been extrapolated from the pixel location
+// format (see above), so chars go from 1 to LCDWIDTH/8, not from 0
+  if((byteNumber <= LCDWIDTH/8) && (byteNumber != 0) && (lineNumber <=LCDHEIGHT) & (lineNumber != 0)) {
+    byteNumber -= 1;
+    lineNumber -= 1;
+    frameBuffer[(lineNumber*LCDWIDTH/8)+byteNumber] = byteToWrite;
+  } 
+}
+
+
+void MemoryLCD::setFrameBufferBlack() {
+  for(char i=0; i<LCDWIDTH*LCDHEIGHT/8; i++) {
+    frameBuffer[i] = 0x00;
+  }
+}
+
+
+void MemoryLCD::setFrameBufferWhite() {
+  for(char i=0; i<LCDWIDTH*LCDHEIGHT/8; i++) {
+    frameBuffer[i] = 0xFF;
+  }
+}
+
+
+void MemoryLCD::writeFrameBufferToDisplay() {
+  writeMultipleLinesToDisplay(1, LCDHEIGHT, frameBuffer);
+}
+
+
 void MemoryLCD::clearLineBuffer() {
   setLineBufferWhite();
+}
+
+
+void MemoryLCD::clearFrameBuffer() {
+  setFrameBufferWhite();
 }
 
 

@@ -20,22 +20,29 @@
 class MemoryLCD {
   public:
     MemoryLCD(char SCSpin, char DISPpin, char EXTCOMINpin, bool useEXTCOMIN);
-    ~MemoryLCD(void);
-//     void begin(); // Should not be needed outside of Arduino - move its contents into constructor
-    // Write data direct to screen
+    ~MemoryLCD();
+    // Write data direct to display
     void writeLineToDisplay(char lineNumber, char *line);
     void writeMultipleLinesToDisplay(char lineNumber, char numLines, char *lines);
     // Write data to line buffer
-    void writePixelToLineBuffer(unsigned int pixNumber, bool isWhite);
+    void writePixelToLineBuffer(unsigned int pixel, bool isWhite);
     void writeByteToLineBuffer(char byteNumber, char byteToWrite);
     void copyByteWithinLineBuffer(char sourceByte, char destinationByte);
-    void setLineBufferBlack(void);
-    void setLineBufferWhite(void);
-    // write data from line buffer to screen
+    void setLineBufferBlack();
+    void setLineBufferWhite();
+    // write data from line buffer to display
     void writeLineBufferToDisplay(char lineNumber);
     void writeLineBufferToDisplayRepeatedly(char lineNumber, char numLines);
+    // Write data to frame buffer
+    void writePixelToFrameBuffer(unsigned int pixel, char lineNumber, bool isWhite);
+    void writeByteToFrameBuffer(char byteNumber, char lineNumber, char byteToWrite);
+    void setFrameBufferBlack();
+    void setFrameBufferWhite();
+    // write data from frame buffer to display
+    void writeFrameBufferToDisplay();
     // clear functions
     void clearLineBuffer();
+    void clearFrameBuffer();
     void clearDisplay();
     // turn display on/off
     void turnOff();
@@ -57,6 +64,7 @@ class MemoryLCD {
     char EXTCOMIN;
     bool enablePWM;
     char lineBuffer[LCDWIDTH/8];
+    char frameBuffer[LCDWIDTH*LCDHEIGHT/8];
     static void *hardToggleVCOM(void *arg);
     char reverseByte(char b);
 };
