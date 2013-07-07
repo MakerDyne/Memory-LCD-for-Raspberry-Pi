@@ -1,13 +1,10 @@
-#ifndef _ARDUINO_TEST_LIB_H
-#define _ARDUINO_TEST_LIB_H
+#ifndef _MEMORY_LCD_LIB_H
+#define _MEMORY_LCD_LIB_H
 
-#if ARDUINO >= 100
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
-
-#include <SPI.h>
+#include <bcm2835.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <iostream>
 
 // Memory LCD pixel dimensions - ALTER ACCORDING TO YOUR PARTICULAR LCD MODEL
 #define LCDWIDTH		(96)
@@ -22,20 +19,21 @@
 
 class MemoryLCD {
   public:
-    MemoryLCD(byte DISPpin, byte SCSpin, byte SIpin, byte SCLKpin, boolean useEXTCOMIN);
-    void begin();
+    MemoryLCD(char SCSpin, char DISPpin, char EXTCOMINpin, bool useEXTCOMIN);
+    ~MemoryLCD(void);
+//     void begin(); // Should not be needed outside of Arduino - move its contents into constructor
     // Write data direct to screen
-    void writeLineToDisplay(byte lineNumber, byte *line);
-    void writeMultipleLinesToDisplay(byte lineNumber, byte numLines, byte *lines);
+    void writeLineToDisplay(char lineNumber, char *line);
+    void writeMultipleLinesToDisplay(char lineNumber, char numLines, char *lines);
     // Write data to line buffer
-    void writePixelToLineBuffer(int pixNumber, boolean isWhite);
-    void writeByteToLineBuffer(byte byteNumber, byte byteToWrite);
-    void copyByteWithinLineBuffer(byte sourceByte, byte destinationByte);
+    void writePixelToLineBuffer(unsigned int pixNumber, bool isWhite);
+    void writeByteToLineBuffer(char byteNumber, char byteToWrite);
+    void copyByteWithinLineBuffer(char sourceByte, char destinationByte);
     void setLineBufferBlack(void);
     void setLineBufferWhite(void);
     // write data from line buffer to screen
-    void writeLineBufferToDisplay(byte lineNumber);
-    void writeLineBufferToDisplayRepeatedly(byte lineNumber, byte numLines);
+    void writeLineBufferToDisplay(char lineNumber);
+    void writeLineBufferToDisplayRepeatedly(char lineNumber, char numLines);
     // clear functions
     void clearLineBuffer();
     void clearDisplay();
@@ -43,20 +41,24 @@ class MemoryLCD {
     void turnOff();
     void turnOn();
     // return display parameters
-    int getDisplayWidth();
-    int getDisplayHeight();
+    unsigned int getDisplayWidth();
+    unsigned int getDisplayHeight();
     // software VCOM control - NOT YET PROPERLY IMPLEMENTED
     void softToggleVCOM();
   private:
-    byte commandByte;
-    byte vcomByte;
-    byte DISP;
-    byte SCS;
-    byte SI;
-    byte SCLK;
-    byte EXTCOMIN;
-    boolean enablePWM;
-    byte lineBuffer[LCDWIDTH/8];
+    char commandByte;
+    char vcomByte;
+    char clearByte;
+    char paddingByte;
+    char DISP;
+    char SCS;
+    char SI;
+    char SCLK;
+    char EXTCOMIN;
+    bool enablePWM;
+    char lineBuffer[LCDWIDTH/8];
+    static void *hardToggleVCOM(void *arg);
+    char reverseByte(char b);
 };
 
 #endif
