@@ -1,0 +1,24 @@
+Sample set of commands to get all necessary software running and the demo program compiled.
+This set of commands installs the software in a new directory called 'electronics'.
+
+cd ~
+mkdir electronics
+cd electronics
+
+sudo aptitude install git
+git clone https://github.com/MakerDyne/Memory-LCD-for-Raspberry-Pi.git
+
+cd ~/electronics
+wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.25.tar.gz
+tar zxvf bcm2835-1.25.tar.gz
+cd bcm2835-1.25
+./configure
+make
+sudo make check
+sudo make install
+
+cd ~/electronics/Memory-LCD-for-Raspberry-Pi/examples/demo/
+g++ -c -g -Wall -funsigned-char demo.cpp ../../MemoryLCD.cpp
+g++ -o demo demo.o MemoryLCD.o  -l bcm2835 -l pthread
+sudo ./demo
+(Ctrl+C to stop the demo)

@@ -59,6 +59,12 @@ cd~
 wget https://github.com/MakerDyne/Memory-LCD-for-Raspberry-Pi/archive/master.zip
 unzip master.zip
 
+alternatively, the wget and unzip commands can be replaced within
+
+git clone https://github.com/MakerDyne/Memory-LCD-for-Raspberry-Pi.github
+
+which will grab the code direct from github ('sudo aptitude install git' if you don't have git installed)
+
 you should end up with the following:
 
 /home/USER/Memory-LCD-for-Raspberry-Pi-master/
