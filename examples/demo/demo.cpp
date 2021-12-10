@@ -65,7 +65,7 @@ int main() {
       for(unsigned int radius = 5; radius < expandingCircleRadius; radius++) {
 	for(unsigned int y = originY - radius; y <= originY; y++) {
 	  // need to calculate left and right limits of the circle
-	  float theta = acos(float(abs(originY-y))/float(radius));
+	  float theta = acos(float(abs(int(originY-y)))/float(radius));
 	  theta -= 1.5708;
 	  unsigned int xLength = cos(theta)*float(radius);
 	  for(unsigned int x = originX - xLength; x <= originX; x++) {
@@ -81,7 +81,7 @@ int main() {
       for(unsigned int radius = expandingCircleRadius; radius > 2; radius--) {
 	for(unsigned int y = originY - radius; y <= originY; y++) {
 	  // need to calculate left and right limits of the circle
-	  float theta = acos(float(abs(originY-y))/float(radius));
+	  float theta = acos(float(abs(int(originY-y)))/float(radius));
 	  theta -= 1.5708;
 	  unsigned int xLength = cos(theta)*float(radius);
 	  for(unsigned int x = originX - xLength; x <= originX ; x++) {
@@ -114,7 +114,7 @@ int main() {
       // draw circle about the centre
       for(unsigned int y = circleOriginY - circleRadius; y <= circleOriginY; y++) {
 	// need to calculate left and right limits of the circle
-	float theta = acos(float(std::abs(circleOriginY-y))/float(circleRadius));
+	float theta = acos(float(std::abs(int(circleOriginY-y)))/float(circleRadius));
 	theta -= 1.5708;
 	unsigned int xLength = cos(theta)*float(circleRadius);
 	for(unsigned int x = circleOriginX - xLength; x <= circleOriginX; x++) {
